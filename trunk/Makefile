@@ -1,40 +1,48 @@
-CC=g++
-MPICC=mpicxx
-
-CFLAGS=-O3 -Wall -Wno-sign-compare -fopenmp -I/Users/wangyi/3rd-party/boost-1.43.0/include
-LDFLAGS=-L/Users/wangyi/3rd-party/boost-1.43.0/lib -lboost_program_options
+# Copyright 2010 Yi Wang (yi.wang.2005@gmail.com)
+#
+# This Makefile builds both lda (single-node training program) and
+# mpi-lda (multi-node training program) with OpenMP feature.
+#
+# To invoke this Makefile:
+#   > make clean && make
+#
+# If you do NOT want OpenMP, just remove -fopenmp from the rest part
+# of this file.
+#
+# If you want to use other compilers instead of GCC/G++, just redefine
+# CC and CXX in following lines.  You may want to consult
+# http://openmp.org/wp/openmp-compilers/ for compilers that support
+# OpenMP.
 
 BUILD_TARGETS=lda infer mpi_lda
 
+CC=g++
+CXX=g++
+MPICXX=mpicxx
+
+CFLAGS=-O3 -Wall -Wextra -Wno-sign-compare -fopenmp -I/Users/wangyi/3rd-party/boost-1.43.0/include
+LDFLAGS=-fopenmp
+LDLIBS=-L/Users/wangyi/3rd-party/boost-1.43.0/lib -lboost_program_options
 
 all: $(BUILD_TARGETS)
 
-cmd_flags.o: cmd_flags.cc cmd_flags.hh
-	$(CC) -c $(CFLAGS)  cmd_flags.cc -o cmd_flags.o
+%.o:%.cc
+	$(CXX) $(CFLAGS) $(CXXFLAGS) -c $< -o $@
 
-common.o: common.cc common.hh
-	$(CC) -c $(CFLAGS)  common.cc -o common.o
+lda: lda.o sampler.o document.o model.o accumulative_model.o cmd_flags.o common.o
 
-document.o: document.cc document.hh common.o
-	$(CC) -c $(CFLAGS)  document.cc -o document.o
+infer: infer.o cmd_flags.o common.o document.o model.o accumulative_model.o sampler.o
 
-model.o: model.cc model.hh common.o
-	$(CC) -c $(CFLAGS)  model.cc -o model.o
-
-accumulative_model.o: accumulative_model.cc accumulative_model.hh common.o model.o
-	$(CC) -c $(CFLAGS)  accumulative_model.cc -o accumulative_model.o
-
-sampler.o: sampler.cc sampler.hh common.o document.o model.o accumulative_model.o
-	$(CC) -c $(CFLAGS)  sampler.cc -o sampler.o
-
-lda: lda.cc cmd_flags.o common.o document.o model.o accumulative_model.o sampler.o
-	$(CC) $(CFLAGS) lda.cc cmd_flags.o common.o document.o model.o accumulative_model.o sampler.o -o lda $(LDFLAGS)
-
-infer: infer.cc cmd_flags.o common.o document.o model.o accumulative_model.o sampler.o
-	$(CC) $(CFLAGS) infer.cc cmd_flags.o common.o document.o model.o accumulative_model.o sampler.o -o infer $(LDFLAGS)
-
-mpi_lda: mpi_lda.cc cmd_flags.o common.o document.o model.o accumulative_model.o sampler.o
-	$(MPICC) $(CFLAGS) mpi_lda.cc cmd_flags.o common.o document.o model.o accumulative_model.o sampler.o -o mpi_lda $(LDFLAGS)
+mpi_lda: mpi_lda.o cmd_flags.o common.o document.o model.o accumulative_model.o sampler.o
+	$(MPICXX) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 clean :
-	rm -rf $(BUILD_TARGETS) *_test *.o *.a *.exe *~ *.stackdump *.core *.dSYM
+	rm -rf $(BUILD_TARGETS) *_test *.o *.a *.exe *~ *.stackdump *.core *.dSYM .depend
+
+.depend: depend
+
+depend: *.cc
+	rm -f ./.depend
+	$(CC) $(CFLAGS) -MM $^>>./.depend;
+
+include .depend
