@@ -13,6 +13,14 @@
 # CC and CXX in following lines.  You may want to consult
 # http://openmp.org/wp/openmp-compilers/ for compilers that support
 # OpenMP.
+#
+# If your boost library is installed somewhere else, just change
+# CFLAGS and LDLIBS accordingly.  Please note that early version of
+# boost (e.g., that installed with Cygwin) may have bugs.  It is
+# recommended to build boost from the latest code.
+#
+# If you do not want MPI, just remove mpi-lda from BUILD_TARGETS.
+#
 
 BUILD_TARGETS=lda infer mpi_lda
 
