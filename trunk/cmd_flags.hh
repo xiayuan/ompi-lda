@@ -36,6 +36,7 @@ class LDACmdLineFlags {
   int         accumulating_iterations_;
   bool        compute_loglikelihood_;
 #ifdef _OPENMP
+  int         num_openmp_threads_;
   int         correction_period_;
 #endif //_OPENMP
 };
