@@ -12,6 +12,10 @@
 
 #include "cmd_flags.hh"
 
+#ifdef _OPENMP
+#include <omp.h>
+#endif //_OPENMP
+
 #include <iostream>
 #include <sstream>
 
@@ -56,6 +60,9 @@ namespace learning_lda {
        "the number of iterations after burn_in_iterations to do sampling"
        " and accumulate the sampling result as the training result")
 #ifdef _OPENMP
+      ("num_openmp_threads",
+       po::value<int>(&num_openmp_threads_)->default_value(1),
+       "the number of threads that OpenMP starts to do parallel training.")
       ("correction_period",
        po::value<int>(&correction_period_)->default_value(5),
        "the number of iterations after burn_in_iterations to do sampling"
@@ -113,6 +120,21 @@ namespace learning_lda {
     if (correction_period_ <= 0) {
       std::cerr << "correction_period must > 0.\n";
       ret = false;
+    }
+
+    if (num_openmp_threads_ <= 0) {
+      std::cerr << "num_openmp_threads must > 0\n";
+      ret = false;
+    }
+
+    if (num_openmp_threads_ > omp_get_max_threads()) {
+      std::cerr << "The max num threads on this system is "
+                << omp_get_max_threads()
+                << ", but you specified " << num_openmp_threads_
+                << ". Reset num_openmp_threads to "
+                << omp_get_max_threads();
+      num_openmp_threads_ = omp_get_max_threads();
+      // No error here.
     }
 #endif //_OPENMP
     return ret;

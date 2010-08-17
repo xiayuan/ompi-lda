@@ -31,6 +31,10 @@
 #include <string>
 #include <map>
 
+#ifdef _OPENMP
+#include "omp.h"
+#endif // _OPENMP
+
 #include "common.hh"
 #include "document.hh"
 #include "model.hh"
@@ -118,6 +122,11 @@ int main(int argc, char** argv) {
 
   // Set random seed
   srand(time(NULL));
+
+#ifdef _OPENMP
+  std::cout << "Use " << flags.num_openmp_threads_ << " threads.\n";
+  omp_set_num_threads(flags.num_openmp_threads_);
+#endif //_OPENMP
 
   LDACorpus corpus;
   map<string, int> word_index_map;
