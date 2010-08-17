@@ -21,6 +21,8 @@
   --burn_in_iterations 10                              \
   --total_iterations 15
 */
+#include <time.h>
+
 #include <fstream>
 #include <set>
 #include <sstream>
