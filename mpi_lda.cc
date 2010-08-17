@@ -21,14 +21,17 @@
   --burn_in_iterations 100                              \
   --total_iterations 150
 */
-
-#include "mpi.h"
+#include "time.h"
 
 #include <fstream>
 #include <set>
 #include <vector>
 #include <sstream>
 #include <string>
+#include <algorithm>
+#include <functional>
+
+#include "mpi.h"
 
 #include "common.hh"
 #include "document.hh"
@@ -45,6 +48,7 @@ using std::vector;
 using std::list;
 using std::map;
 using std::string;
+using std::sort;
 using learning_lda::LDADocument;
 
 namespace learning_lda {

@@ -14,6 +14,7 @@
 #define _OPENSOURCE_GLDA_COMMON_H__
 
 #include <stdlib.h>
+#include <string.h>
 
 #include <iostream>
 #include <list>

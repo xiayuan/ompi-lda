@@ -41,45 +41,15 @@ namespace learning_lda {
   }
 
   void LDASampler::InitializeModel(const LDACorpus& corpus) {
-#ifndef _OPENMP
-    for (LDACorpus::const_iterator iter = corpus.begin();
-         iter != corpus.end();
-         ++iter) {
-      LDADocument* document = *iter;
+#pragma omp parallel for
+    for (int i = 0; i < corpus.size(); ++i) {
+      LDADocument* document = corpus[i];
       for (LDADocument::WordOccurrenceIterator iter2(document);
            !iter2.Done();
            iter2.Next()) {
         model_->IncrementTopic(iter2.Word(), iter2.Topic(), 1);
       }
     }
-#else //_OPENMP
-#define UPDATE_MODEL_PART_OF_CORPUS                                         \
-    {                                                                   \
-      int    proc        = omp_get_thread_num();                        \
-      int    num_procs   = omp_get_num_threads();                       \
-      size_t range_begin = proc * corpus.size() / num_procs;           \
-      size_t range_end   = (proc + 1) * corpus.size() / num_procs;     \
-      for (int i = range_begin; i < min(range_end, corpus.size()); ++i) { \
-        LDADocument* document = corpus[i];                              \
-        for (LDADocument::WordOccurrenceIterator iter2(document);       \
-             !iter2.Done();                                             \
-             iter2.Next()) {                                            \
-          model_->IncrementTopic(iter2.Word(), iter2.Topic(), 1);       \
-        }                                                               \
-      }                                                                 \
-    }
-#pragma omp parallel sections num_threads(4)
-    {
-#pragma omp section
-      UPDATE_MODEL_PART_OF_CORPUS
-#pragma omp section
-      UPDATE_MODEL_PART_OF_CORPUS
-#pragma omp section
-      UPDATE_MODEL_PART_OF_CORPUS
-#pragma omp section
-      UPDATE_MODEL_PART_OF_CORPUS
-        }
-#endif //_OPENMP
   }
 
   void LDASampler::UpdateModel(const LDACorpus& corpus) {
@@ -92,35 +62,10 @@ namespace learning_lda {
   void LDASampler::DoGibbsSampling(LDACorpus* corpus,
                                    bool update_model,
                                    bool burn_in) {
-#ifndef _OPENMP
-    for (LDACorpus::iterator iter = corpus->begin();
-         iter != corpus->end();
-         ++iter) {
-      DoGibbsSampling(*iter, update_model);
+#pragma omp parallel for
+    for (int i = 0; i < corpus->size(); ++i) {
+      DoGibbsSampling((*corpus)[i], update_model);
     }
-#else //_OPENMP
-#define RESAMPLE_PART_OF_CORPUS                                         \
-    {                                                                   \
-      int    proc        = omp_get_thread_num();                        \
-      int    num_procs   = omp_get_num_threads();                       \
-      size_t range_begin = proc * corpus->size() / num_procs;           \
-      size_t range_end   = (proc + 1) * corpus->size() / num_procs;     \
-      for (int i = range_begin; i < min(range_end, corpus->size()); ++i) { \
-        DoGibbsSampling((*corpus)[i], update_model);                    \
-      }                                                                 \
-    }
-#pragma omp parallel sections num_threads(4)
-    {
-#pragma omp section
-      RESAMPLE_PART_OF_CORPUS
-#pragma omp section
-        RESAMPLE_PART_OF_CORPUS
-#pragma omp section
-        RESAMPLE_PART_OF_CORPUS
-#pragma omp section
-        RESAMPLE_PART_OF_CORPUS
-        }
-#endif //_OPENMP
 
     if (accum_model_ != NULL && update_model && !burn_in) {
       accum_model_->AccumulateModel(*model_);
@@ -185,44 +130,15 @@ namespace learning_lda {
   }
 
   double LDASampler::ComputeLogLikelihood(const LDACorpus& corpus) const {
-#ifndef _OPENMP
-    double loglikelihood = 0.0;
-    for (LDACorpus::const_iterator iterator = corpus.begin();
-         iterator != corpus.end();
-         ++iterator) {
-      loglikelihood += ComputeLogLikelihood(*iterator);
-    }
-    return loglikelihood;
-#else //_OPENMP
-    vector<double> local_loglikelihood(4, 0.0); // 4 threads
+    vector<double> local_loglikelihood(corpus.size(), 0.0);
 
-#define LOGLIKELIHOOD_PART_OF_CORPUS                                    \
-    {                                                                   \
-      int    proc        = omp_get_thread_num();                        \
-      int    num_procs   = omp_get_num_threads();                       \
-      size_t range_begin = proc * corpus.size() / num_procs;            \
-      size_t range_end   = (proc + 1) * corpus.size() / num_procs;      \
-      for (int i = range_begin; i < min(range_end, corpus.size()); ++i) { \
-        local_loglikelihood[proc] +=                                    \
-          ComputeLogLikelihood(corpus[i]);                              \
-      }                                                                 \
-    }
-
-#pragma omp parallel sections num_threads(4)
-    {
-#pragma omp section
-      LOGLIKELIHOOD_PART_OF_CORPUS
-#pragma omp section
-      LOGLIKELIHOOD_PART_OF_CORPUS
-#pragma omp section
-      LOGLIKELIHOOD_PART_OF_CORPUS
-#pragma omp section
-      LOGLIKELIHOOD_PART_OF_CORPUS
+#pragma omp parallel for
+    for (int i = 0; i < corpus.size(); ++i) {
+      local_loglikelihood[i] = ComputeLogLikelihood(corpus[i]);
     }
 
     return accumulate(local_loglikelihood.begin(), local_loglikelihood.end(),
                       0.0, plus<double>());
-#endif //_OPENMP
   }
 
   // Compute log P(d) = sum_w log P(w), where P(w) = sum_z P(w|z)P(z|d).

@@ -22,6 +22,8 @@
   --accumulating_iterations=50
 */
 
+#include <time.h>
+
 #include <iostream>
 #include <fstream>
 #include <set>
@@ -122,6 +124,7 @@ int main(int argc, char** argv) {
   CHECK_GT(LoadAndInitTrainingCorpus(flags.training_data_file_,
                                      flags.num_topics_,
                                      &corpus, &word_index_map), 0);
+
   LDAModel model(flags.num_topics_, word_index_map);
   LDAAccumulativeModel accum_model(flags.num_topics_, word_index_map.size());
   LDASampler sampler(flags.alpha_, flags.beta_, &model, &accum_model);
