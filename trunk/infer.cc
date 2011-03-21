@@ -49,7 +49,7 @@ int main(int argc, char** argv) {
 
   bool options_parsing_succeeded = false;
   LDACmdLineFlags flags(argc, argv, &options_parsing_succeeded);
-  if (!options_parsing_succeeded || !flags.IsValidForTraining()) {
+  if (!options_parsing_succeeded || !flags.IsValidForInference()) {
     std::cerr << "Error in parsing command line options.\n";
     return -1;
   }
