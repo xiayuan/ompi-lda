@@ -28,9 +28,9 @@ CC=g++
 CXX=g++
 MPICXX=mpicxx
 
-CFLAGS=-O3 -Wall -Wextra -Wno-sign-compare -fopenmp -I/home/yiwang/3rd-party/boost-1.43.0/include -I/home/yiwang/3rd-party/mpich2-1.2.1p1/include
+CFLAGS=-O3 -Wall -Wextra -Wno-sign-compare -fopenmp -I/Users/wangyi/3rd-party/boost-1.43.0/include -I/Users/wangyi/3rd-party/mpich2-1.2.1p1/include
 LDFLAGS=-fopenmp
-LDLIBS=-static -static-libgcc -L/home/yiwang/3rd-party/boost-1.43.0/lib -lboost_program_options
+LDLIBS=-L/Users/wangyi/3rd-party/boost-1.43.0/lib -lboost_program_options
 
 all: $(BUILD_TARGETS)
 
